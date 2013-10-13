@@ -77,6 +77,11 @@ class CRUDController extends Controller
             return $request->getMethod();
         }
 
+        // allow only POST method to be overloaded with "_method" parameter to avoid security issues
+        if ($request->getMethod() != 'POST') {
+            return $request->getMethod();
+        }
+
         return $request->request->get('_method');
     }
 
