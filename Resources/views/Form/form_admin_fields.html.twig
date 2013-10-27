@@ -213,3 +213,72 @@ file that was distributed with this source code.
         </div>
     {% endspaceless %}
 {% endblock %}
+
+{% block sonata_type_model_autocomplete_widget %}
+{% spaceless %}
+    {{ form_widget(form.title) }}
+    {{ form_widget(form.identifier) }}
+
+    <script>
+        (function ($) {
+            $("#{{ form.title.vars.id }}").select2({
+                placeholder: "{{ placeholder }}",
+                minimumInputLength: {{ minimum_input_length }},
+                ajax: {
+                    url:  "{{ url ?: url(route.name, route.parameters|default([])) }}",
+                    dataType: 'json',
+                    quietMillis: 100,
+                    data: function (term, page) { // page is the one-based page number tracked by Select2
+                        return {
+                                //search term
+                                "{{ req_param_name_search }}": term,
+
+                                // page size
+                                "{{ req_param_name_page_limit }}": {{ items_per_page }},
+
+                                // page number
+                                "{{ req_param_name_page_number }}": page,
+
+                                // admin
+                                'uniqid': "{{ sonata_admin.admin.root.uniqid }}",
+                                'code':   "{{ sonata_admin.admin.root.code }}",
+                                'field':  "{{ name }}"
+
+                                // other parameters
+                                {% if req_params is not empty %},
+                                    {%- for key, value in req_params -%}
+                                        "{{- key -}}": "{{- value -}}"
+                                        {%- if not loop.last -%}, {% endif -%}
+                                    {%- endfor -%}
+                                {% endif %}
+                            };
+                    },
+                    results: function (data, page) {
+                        // notice we return the value of more so Select2 knows if more results can be loaded
+                        return {results: data.items, more: data.more};
+                    }
+                },
+                initSelection: function(element, callback) {
+                    {% block sonata_type_model_autocomplete_init_selection %}
+                        var element_value = $(element).val();
+                        if (element_value !== "") {
+                            var data = {'title':element_value, 'id':$("#{{ form.identifier.vars.id }}").val()};
+                            callback(data);
+                        }
+                    {% endblock %}
+                },
+                formatResult: function (item) {
+                    return {% block sonata_type_model_autocomplete_dropdown_item_format %}'<div class="sonata-autocomplete-dropdown-item">'+item.title+'</div>'{% endblock %};// format of one dropdown item
+                },
+                formatSelection: function (item) {
+                    $("#{{ form.identifier.vars.id }}").val(item.id);// change id of hidden input
+                    return {% block sonata_type_model_autocomplete_selection_format %}item.title{% endblock %};// format selected item '<b>'+item.title+'</b>';
+                },
+                dropdownCssClass: "{{ dropdown_css_class }}",
+                escapeMarkup: function (m) { return m; } // we do not want to escape markup since we are displaying html in results
+            });
+
+        })(jQuery);
+    </script>
+{% endspaceless %}
+{% endblock sonata_type_model_autocomplete_widget %}

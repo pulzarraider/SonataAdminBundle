@@ -21,6 +21,8 @@ use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\Validator\ValidatorInterface;
 use Sonata\AdminBundle\Admin\Pool;
 use Sonata\AdminBundle\Admin\AdminHelper;
+use Symfony\Component\Security\Core\Exception\AccessDeniedException;
+use Symfony\Component\HttpKernel\Exception\HttpException;
 
 class HelperController
 {
@@ -288,5 +290,121 @@ class HelperController
         $content = $extension->renderListElement($rootObject, $fieldDescription);
 
         return new JsonResponse(array('status' => 'OK', 'content' => $content));
+    }
+
+    /**
+     * Retrieve list of items for autocomplete form field
+     *
+     * @param Request $request
+     *
+     * @return JsonResponse
+     *
+     * @throws \RuntimeException
+     * @throws AccessDeniedException
+     * @throws HttpException
+     */
+    public function retrieveAutocompleteItemsAction(Request $request)
+    {
+        $searchText = $request->get('q');
+        $page       = $request->get('page');
+        // $limit      = $request->get('limit'); //do not trust user limit, use defined limit from form options
+        $code       = $request->get('code');
+        $field      = $request->get('field');
+
+        if (!$request->isXmlHttpRequest()) {
+            // Expected a XmlHttpRequest request header
+            throw new HttpException(403, 'Forbidden');
+        }
+
+        $admin = $this->pool->getInstance($code);
+        $admin->setRequest($request);
+
+        // check user permission
+        if (false === $admin->isGranted('LIST')) {
+            throw new AccessDeniedException();
+        }
+
+        // subject will be empty to avoid unnecessary database requests and keep autocomplete function fast
+        $subject = $admin->getNewInstance();
+        $admin->setSubject($subject);
+
+        // build form
+        $form = $admin->getForm();
+
+        $fieldDescription = $admin->getFormFieldDescription($field);
+
+        if (!$fieldDescription) {
+            throw new \RuntimeException(sprintf('The field "%s" does not exist .', $field));
+        }
+
+        if ($fieldDescription->getType() !== 'sonata_type_model_autocomplete') {
+            throw new \RuntimeException(sprintf('Unsupported form type "%s" for field "%s".', $fieldDescription->getType(), $field));
+        }
+
+        $modelManager = $admin->getModelManager();
+
+        // get name of associated entity class
+        $mapping = $fieldDescription->getAssociationMapping();
+
+        if (!isset($mapping['targetEntity'])) {
+            throw new \RuntimeException(sprintf('No associated entity with field "%s".', $field));
+        }
+
+        $class = $mapping['targetEntity'];
+
+        // form attributes
+        $formAutocomplete = $form->get($fieldDescription->getName());
+
+        $property = $formAutocomplete->getAttribute('property');
+        $callback = $formAutocomplete->getAttribute('callback');
+        $minimumInputLength = $formAutocomplete->getAttribute('minimum_input_length');
+        $limit = $formAutocomplete->getAttribute('items_per_page');
+        $searchType = $formAutocomplete->getAttribute('search_type');
+
+        if ($page < 1) {
+            $page = 1;
+        }
+
+        $offset = ($page-1)*$limit;
+
+        if (mb_strlen($searchText, 'UTF-8') < $minimumInputLength) {
+            return new JsonResponse(array('status' => 'KO', 'message' => 'Too short search string.'));
+        }
+
+        $alias = 'o';
+        $queryBuilder = $modelManager->getEntityManager($class)->createQueryBuilder();
+        $modelManager->getLikeQuery($queryBuilder, $class, $alias, $property, $searchText, $searchType);
+
+        if ($callback !== null) {
+            if (!is_callable($callback)) {
+                throw new \RuntimeException('Callback doesn`t contain callable function.');
+            }
+
+            call_user_func($callback, $queryBuilder, $alias, $property, $searchText);
+        }
+
+        // limit number of results
+        $queryBuilder->setFirstResult($offset)
+            ->setMaxResults($limit+1); // +1 row so we can detect if there are more items or not
+
+        $results = $queryBuilder->getQuery()->getResult();
+
+        $propertyGetter = 'get'.ucfirst($property);
+
+        $items = array();
+        $i = 0;
+
+        foreach ($results as $object) {
+            $i++;
+
+            // ignore last item
+            if ($i > $limit) {
+                break;
+            }
+
+            $items[] = array('id'=>current($modelManager->getIdentifierValues($object)), 'title'=>( call_user_func(array($object, $propertyGetter))));
+        }
+
+        return new JsonResponse(array('status' => 'OK', 'more'=>(count($results) == $limit+1), 'items' => $items));
     }
 }

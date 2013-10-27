@@ -116,6 +116,81 @@ class
   calculated from the linked Admin class. You usually should not need to set
   this manually.
 
+sonata_type_model_autocomplete
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+Setting a field type of ``sonata_type_model_autocomplete`` will use an instance of
+``ModelAutocompleteType`` to render that field. This Type allows you to choose an existing
+entity from the linked model class. In effect it shows a list of options from
+which you can choose a value. The list of options is loaded dynamically
+with ajax after typing few chars (autocomplete). It is best for entities with many
+items.
+
+For example, we have an entity class called ``Article`` which has a field called
+``category`` which maps a relationship to another entity class called ``Category``.
+All we need to do now is add a reference for this field in our ``ArticleAdmin`` class:
+
+.. code-block:: php
+
+    class ArticleAdmin extends Admin
+    {
+        protected function configureFormFields(FormMapper $formMapper)
+        {
+            // the dropdown autocomplete list will show only "title" from Category entity
+            $formMapper
+                ->add('category', 'sonata_type_model_autocomplete', array('property'=>'title'))
+            ;
+        }
+    }
+
+The available options are:
+
+property
+  defaults to null. You have to set this to designate which field to use for the choice values.
+
+class
+  The entity class managed by this field. Defaults to null, but is actually
+  calculated from the linked Admin class. You usually should not need to set
+  this manually.
+
+model_manager
+  defaults to null, but is actually calculated from the linked Admin class.
+  You usually should not need to set this manually.
+
+search_type
+  defaults to "contains". Selection type that is used to search for items.
+  Available options are: ``begins_with``, ``contains``, ``ends_with``.
+
+placeholder
+  defaults to "". Placeholder is shown when no item is selected.
+
+minimum_input_length
+  defaults to 3. Minimum number of chars that should be typed to load ajax data.
+
+items_per_page
+  defaults to 10. Number of items per one ajax request.
+
+url
+  defaults to "". Target external remote url for ajax requests.
+  You usually should not need to set this manually.
+
+route
+  The route ``name`` with ``parameters`` that is used as target url for ajax
+  requests.
+
+dropdown_css_class
+  defaults to "sonata-autocomplete-dropdown". CSS class of dropdown list.
+
+req_param_name_search
+  defaults to "q". Ajax request parameter name which contains the searched text.
+
+req_param_name_page_number
+  defaults to "page". Ajax request parameter name which contains the page number.
+
+req_param_name_page_limit
+  defaults to "limit".  Ajax request parameter name which contains the limit of
+  items per page.
+
 sonata_type_admin
 ^^^^^^^^^^^^^^^^^
 
