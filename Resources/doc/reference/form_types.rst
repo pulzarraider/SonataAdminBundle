@@ -123,7 +123,7 @@ Setting a field type of ``sonata_type_model_autocomplete`` will use an instance 
 ``ModelAutocompleteType`` to render that field. This Type allows you to choose an existing
 entity from the linked model class. In effect it shows a list of options from
 which you can choose a value. The list of options is loaded dynamically
-with ajax after typing few chars (autocomplete). It is best for entities with many
+with ajax after typing 3 chars (autocomplete). It is best for entities with many
 items.
 
 For example, we have an entity class called ``Article`` which has a field called
@@ -156,6 +156,9 @@ class
 model_manager
   defaults to null, but is actually calculated from the linked Admin class.
   You usually should not need to set this manually.
+
+multiple
+  defaults to false. Set to true, if you`re field is in many-to-many relation.
 
 search_type
   defaults to "contains". Selection type that is used to search for items.
@@ -300,19 +303,23 @@ btn_add and btn_catalogue:
 **TIP**: A jQuery event is fired after a row has been added (``sonata-admin-append-form-element``).
 You can listen to this event to trigger custom javascript (eg: add a calendar widget to a newly added date field)
 
-collection
-^^^^^^^^^^
+sonata_type_native_collection (previously collection)
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-This bundle handle the symfony ``collection`` form type by adding:
+This bundle handle the native symfony ``collection`` form type by adding:
 
 * an ``add`` button if you set the ``allow_add`` option to ``true``.
 * a ``delete`` button if you set the ``allow_delete`` option to ``true``.
 
-**TIP**: A jQuery event is fired after a row has been added (``sonata-admin-append-form-element``).
-You can listen to this event to trigger custom javascript (eg: add a calendar widget to a newly added date field)
+.. TIP::
 
-**TIP**: A jQuery event is fired after a row has been added (``sonata-collection-item-added``)
-or deleted (``sonata-collection-item-deleted``). You can listen to these events to trigger custom javascript.
+    A jQuery event is fired after a row has been added (``sonata-admin-append-form-element``).
+    You can listen to this event to trigger custom javascript (eg: add a calendar widget to a newly added date field)
+
+.. TIP::
+
+    A jQuery event is fired after a row has been added (``sonata-collection-item-added``)
+    or deleted (``sonata-collection-item-deleted``). You can listen to these events to trigger custom javascript.
 
 FieldDescription options
 ^^^^^^^^^^^^^^^^^^^^^^^^

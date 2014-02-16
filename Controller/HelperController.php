@@ -338,7 +338,7 @@ class HelperController
         $fieldDescription = $admin->getFormFieldDescription($field);
 
         if (!$fieldDescription) {
-            throw new \RuntimeException(sprintf('The field "%s" does not exist .', $field));
+            throw new \RuntimeException(sprintf('The field "%s" does not exist.', $field));
         }
 
         if ($fieldDescription->getType() !== 'sonata_type_model_autocomplete') {
@@ -356,8 +356,11 @@ class HelperController
 
         $class = $mapping['targetEntity'];
 
-        // form attributes
         $formAutocomplete = $form->get($fieldDescription->getName());
+
+        if ($formAutocomplete->getAttribute('disabled')) {
+            throw new AccessDeniedException('Autocomplete list can`t be retrieved because the form element is disabled or read_only.');
+        }
 
         $property = $formAutocomplete->getAttribute('property');
         $callback = $formAutocomplete->getAttribute('callback');

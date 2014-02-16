@@ -29,16 +29,19 @@ class ModelToIdPropertyTransformer implements DataTransformerInterface
 
     protected $property;
 
+    protected $multiple;
+
     /**
      * @param ModelManagerInterface $modelManager
      * @param string                $className
      * @param string                $property
      */
-    public function __construct(ModelManagerInterface $modelManager, $className, $property)
+    public function __construct(ModelManagerInterface $modelManager, $className, $property, $multiple)
     {
         $this->modelManager = $modelManager;
         $this->className    = $className;
         $this->property     = $property;
+        $this->multiple     = $multiple;
     }
 
     /**
@@ -46,25 +49,62 @@ class ModelToIdPropertyTransformer implements DataTransformerInterface
      */
     public function reverseTransform($value)
     {
-        if (empty($value) || !isset($value['identifier']) || !isset($value['title'])) {
-            return null;
+        $collection = $this->modelManager->getModelCollectionInstance($this->className);
+
+        if (empty($value) || empty($value['identifiers'])) {
+            if (!$this->multiple) {
+                return null;
+            } else {
+                return $collection;
+            }
         }
 
-        return $this->modelManager->find($this->className, $value['identifier']);
+        if (!$this->multiple) {
+             return $this->modelManager->find($this->className, current($value['identifiers']));
+        }
+
+        $identifierFieldName = current($this->modelManager->getIdentifierFieldNames($this->className));
+        $queryBuilder = $this->modelManager->createQuery($this->className, 'o');
+
+        $idx        = array();
+        $connection = $queryBuilder->getEntityManager()->getConnection();
+        foreach ($value['identifiers'] as $id) {
+            $idx[] = $connection->quote($id);
+        }
+        $queryBuilder->andWhere(sprintf('o.%s IN (%s)', $identifierFieldName, implode(',', $idx)));
+        $query = $queryBuilder->getQuery();
+
+        foreach ($query->getResult() as $entity) {
+            $collection->add($entity);
+        }
+
+        return $collection;
     }
 
     /**
      * {@inheritDoc}
      */
-    public function transform($entity)
+    public function transform($entityOrCollection)
     {
-        if (empty($entity)) {
-            return null;
+        $result = array('identifiers' => array(), 'titles' => array());
+
+        if (!$entityOrCollection) {
+            return $result;
+        }
+        if ($entityOrCollection instanceof \ArrayAccess) {
+            $collection = $entityOrCollection;
+        } else {
+            $collection = array($entityOrCollection);
         }
 
-        $id = current($this->modelManager->getIdentifierValues($entity));
-        $title = call_user_func(array($entity, 'get'.ucfirst($this->property)));
+        foreach ($collection as $entity) {
+            $id  = current($this->modelManager->getIdentifierValues($entity));
+            $title = call_user_func(array($entity, 'get'.ucfirst($this->property)));
 
-        return array('identifier'=>$id, 'title'=>$title);
+            $result['identifiers'][] = $id;
+            $result['titles'][] = $title;
+        }
+
+        return $result;
     }
 }
