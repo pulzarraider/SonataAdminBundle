@@ -37,18 +37,18 @@ class ModelAutocompleteType extends AbstractType
     public function buildForm(FormBuilderInterface $builder, array $options)
     {
         $builder
-                ->addViewTransformer(new ModelToIdPropertyTransformer($options['model_manager'], $options['class'], $options['property']), true)
+                ->addViewTransformer(new ModelToIdPropertyTransformer($options['model_manager'], $options['class'], $options['property'], $options['multiple']), true)
         ;
 
-        // form type is created from `text` and `hidden` form elements.
-        $builder->add('identifier', 'hidden');
-        $builder->add('title', 'text', array('attr'=>array('class'=>'span5')));
+        $builder->add('title', 'text', array('attr'=>array('class'=>'span5'), 'property_path' => '[titles][0]'));
+        $builder->add('identifiers', 'collection', array('type'=>'hidden', 'allow_add' => true, 'allow_delete' => true));
 
         $builder->setAttribute('property', $options['property']);
         $builder->setAttribute('callback', $options['callback']);
         $builder->setAttribute('minimum_input_length', $options['minimum_input_length']);
         $builder->setAttribute('items_per_page', $options['items_per_page']);
         $builder->setAttribute('search_type', $options['search_type']);
+        $builder->setAttribute('disabled', $options['disabled'] || $options['read_only']);
     }
 
     /**
@@ -57,6 +57,7 @@ class ModelAutocompleteType extends AbstractType
     public function buildView(FormView $view, FormInterface $form, array $options)
     {
         $view->vars['placeholder'] = $options['placeholder'];
+        $view->vars['multiple'] = $options['multiple'];
         $view->vars['minimum_input_length'] = $options['minimum_input_length'];
         $view->vars['items_per_page'] = $options['items_per_page'];
 
@@ -84,6 +85,7 @@ class ModelAutocompleteType extends AbstractType
             'property'                        => null,
             'callback'                        => null,
             'search_type'                     => self::SEARCH_TYPE_CONTAINS,
+            'multiple'                        => false,
 
             'placeholder'                     => '',
             'minimum_input_length'            => 3, //minimum 3 chars should be typed to load ajax data
