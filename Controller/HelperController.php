@@ -104,7 +104,7 @@ class HelperController
         $extension->initRuntime($this->twig);
         $extension->renderer->setTheme($view, $admin->getFormTheme());
 
-        return new Response($extension->renderer->searchAndRenderBlock($view, 'widget'));
+        return new Response($extension->renderer->searchAndRenderBlock($view, 'widget', array('last_row'=>true)));
     }
 
     /**

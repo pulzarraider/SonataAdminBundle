@@ -34,6 +34,8 @@ class AdminType extends AbstractType
             $builder->add('_delete', 'checkbox', array('required' => false, 'mapped' => false, 'translation_domain' => $admin->getTranslationDomain()));
         }
 
+        $builder->add('_identifier', 'hidden', array('required' => false, 'property_path' => current($admin->getModelManager()->getIdentifierFieldNames($admin->getClass())), 'label'=>false));
+
         if (!$admin->hasSubject()) {
             $admin->setSubject($builder->getData());
         }
