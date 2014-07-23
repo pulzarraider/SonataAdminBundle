@@ -355,15 +355,15 @@ class HelperController
 
         $formAutocomplete = $form->get($fieldDescription->getName());
 
-        if ($formAutocomplete->getAttribute('disabled')) {
+        if ($formAutocomplete->getConfig()->getAttribute('disabled')) {
             throw new AccessDeniedException('Autocomplete list can`t be retrieved because the form element is disabled or read_only.');
         }
 
-        $property = $formAutocomplete->getAttribute('property');
-        $callback = $formAutocomplete->getAttribute('callback');
-        $minimumInputLength = $formAutocomplete->getAttribute('minimum_input_length');
-        $limit = $formAutocomplete->getAttribute('items_per_page');
-        $searchType = $formAutocomplete->getAttribute('search_type');
+        $property = $formAutocomplete->getConfig()->getAttribute('property');
+        $callback = $formAutocomplete->getConfig()->getAttribute('callback');
+        $minimumInputLength = $formAutocomplete->getConfig()->getAttribute('minimum_input_length');
+        $limit = $formAutocomplete->getConfig()->getAttribute('items_per_page');
+        $searchType = $formAutocomplete->getConfig()->getAttribute('search_type');
 
         if ($page < 1) {
             $page = 1;
