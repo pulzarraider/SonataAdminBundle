@@ -218,6 +218,21 @@ class Datagrid implements DatagridInterface
 
         return false;
     }
+    
+    /**
+     * {@inheritdoc}
+     */
+    public function hasDisplayableFilters()
+    {
+        foreach ($this->filters as $name => $filter) {
+            $showFilter = $filter->getOption('show_filter', null);
+            if (($filter->isActive() && $showFilter === null) || ($showFilter === true)) {
+                return true;
+            }
+        }
+
+        return false;
+    }
 
     /**
      * {@inheritdoc}
