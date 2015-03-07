@@ -161,9 +161,9 @@ file that was distributed with this source code.
         <form class="sonata-filter-form {{ admin.isChild and 1 == admin.datagrid.filters|length ? 'hide' : '' }}" action="{{ admin.generateUrl('list') }}" method="GET">
             {{ form_errors(form) }}
             <fieldset class="filter_legend">
-                <legend class="filter_legend {{ admin.datagrid.hasActiveFilters ? 'active' : 'inactive' }}">{{ 'label_filters'|trans({}, 'SonataAdminBundle') }}</legend>
+                <legend class="filter_legend {{ admin.datagrid.hasActiveFilters or admin.datagrid.hasDisplayableFilters ? 'active' : 'inactive' }}">{{ 'label_filters'|trans({}, 'SonataAdminBundle') }}</legend>
 
-                <div class="filter_container {{ admin.datagrid.hasActiveFilters ? 'active' : 'inactive' }}">
+                <div class="filter_container {{ admin.datagrid.hasActiveFilters or admin.datagrid.hasDisplayableFilters ? 'active' : 'inactive' }}">
                     <div>
                         {% for filter in admin.datagrid.filters %}
                             <div class="clearfix">
